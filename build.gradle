@@ -1,0 +1,36 @@
+buildscript {
+    ext {
+        kotlinVersion = '1.1.50'
+        buildToolsVersion = "26.0.1"
+        supportLibVersion = "26.0.2"
+    }
+
+    repositories {
+        jcenter()
+        maven {
+            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.50"
+        classpath "io.realm:realm-gradle-plugin:3.7.2"
+
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        maven {
+            url "https://maven.google.com"
+        }
+        maven {
+            url 'http://oss.jfrog.org/artifactory/oss-snapshot-local'
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
