@@ -9,21 +9,31 @@ import okhttp3.CipherSuite
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.TlsVersion
-import java.io.IOException
-import java.security.KeyManagementException
-import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
-import javax.security.cert.CertificateException
-
-private val API_LEVEL_11 = 11
-private val API_LEVEL_16 = 16
-private val API_LEVEL_20 = 20
-private val API_LEVEL_24 = 24
-
-private val KEYSTORE_PASSWORD = "keystorePassword"
-private val FORCE_TLS_1_2 = true
 
 object OkHttpProvider {
+
+    private const val API_LEVEL_11 = 11
+    private const val API_LEVEL_16 = 16
+    private const val API_LEVEL_20 = 20
+    private const val API_LEVEL_24 = 24
+
+    private const val KEYSTORE_PASSWORD = "keystorePassword"
+    private const val FORCE_TLS_1_2 = true
+
+    fun OkHttpClient.Builder.setSelfSignedCert(context: Context,
+                                               @RawRes bksKeyStore: Int,
+                                               keystorePassword: String,
+                                               forceTls12: Boolean): OkHttpClient.Builder {
+        try {
+            val socketFactory = getPinnedCertSocketFactory(context, bksKeyStore, keystorePassword, forceTls12)
+            val trustManager = getPinnedCertTrustManager(context, bksKeyStore, keystorePassword)
+            this.sslSocketFactory(socketFactory, trustManager)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return this
+    }
+
     fun provideSecureOkHttpClient(context: Context): OkHttpClient {
 
         val builder = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
@@ -69,34 +79,12 @@ object OkHttpProvider {
                     CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)
         }
 
-
         val client = OkHttpClient.Builder()
                 .connectionSpecs(listOf(builder.build()))
                 .setSelfSignedCert(context, R.raw.github_cert, KEYSTORE_PASSWORD, FORCE_TLS_1_2)
-                .addInterceptor(TlsInterceptor(context))
+                .addInterceptor(TlsInterceptor())
                 .build()
         return client
     }
 
 }
-
-
-fun OkHttpClient.Builder.setSelfSignedCert(context: Context, @RawRes bksKeyStore: Int, keystorePassword: String, forceTls12: Boolean): OkHttpClient.Builder {
-    try {
-        val socketFactory = getPinnedCertSocketFactory(context, bksKeyStore, keystorePassword, forceTls12)
-        val trustManager = getPinnedCertTrustManager(context, bksKeyStore, keystorePassword)
-        this.sslSocketFactory(socketFactory, trustManager)
-    } catch (e: KeyStoreException) {
-        e.printStackTrace()
-    } catch (e: CertificateException) {
-        e.printStackTrace()
-    } catch (e: NoSuchAlgorithmException) {
-        e.printStackTrace()
-    } catch (e: IOException) {
-        e.printStackTrace()
-    } catch (e: KeyManagementException) {
-        e.printStackTrace()
-    }
-    return this
-}
-

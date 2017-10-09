@@ -7,6 +7,7 @@ import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.security.Security
 
 class AppSecApplication : Application() {
+
     companion object {
         init {
             Security.insertProviderAt(BouncyCastleProvider(), 1)
@@ -22,4 +23,5 @@ class AppSecApplication : Application() {
     private fun initializeRandomNumberFix() {
         PRNGFixes.apply()
     }
+
 }

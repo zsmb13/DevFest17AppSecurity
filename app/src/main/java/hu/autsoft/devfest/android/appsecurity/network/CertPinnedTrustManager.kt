@@ -11,28 +11,40 @@ import java.security.cert.CertificateException
 import java.util.*
 import javax.net.ssl.*
 
-@Throws(KeyStoreException::class, CertificateException::class, NoSuchAlgorithmException::class, IOException::class, KeyManagementException::class)
-fun getPinnedCertSocketFactory(context: Context, keyStoreFile: Int, keystorePassword: String, forceTls12: Boolean): SSLSocketFactory {
+@Throws(KeyStoreException::class,
+        CertificateException::class,
+        NoSuchAlgorithmException::class,
+        IOException::class,
+        KeyManagementException::class)
+fun getPinnedCertSocketFactory(context: Context,
+                               keyStoreFile: Int,
+                               keystorePassword: String,
+                               forceTls12: Boolean): SSLSocketFactory {
     val trustManagers = getTrustManagers(context, keyStoreFile, keystorePassword)
     val sslContext = SSLContext.getInstance("TLS")
     sslContext.init(null, trustManagers, null)
 
-    var socketFactory = sslContext.socketFactory
-
-    if (forceTls12 && Build.VERSION.SDK_INT in 16..19) {
-        socketFactory = ForceTlsSocketFactory(sslContext.socketFactory)
-    }
-    return socketFactory
+    return if (forceTls12 && Build.VERSION.SDK_INT in 16..19)
+        ForceTlsSocketFactory(sslContext.socketFactory)
+    else
+        sslContext.socketFactory
 }
 
-
-@Throws(KeyStoreException::class, CertificateException::class, NoSuchAlgorithmException::class, IOException::class, KeyManagementException::class)
-fun getPinnedCertTrustManager(context: Context, keyStoreFile: Int, keystorePassword: String): X509TrustManager {
+@Throws(KeyStoreException::class,
+        CertificateException::class,
+        NoSuchAlgorithmException::class,
+        IOException::class,
+        KeyManagementException::class)
+fun getPinnedCertTrustManager(context: Context,
+                              keyStoreFile: Int,
+                              keystorePassword: String): X509TrustManager {
     val trustManagers = getTrustManagers(context, keyStoreFile, keystorePassword)
     return extractX509TrustManager(trustManagers)
 }
 
-private fun getTrustManagers(context: Context, keyStoreFile: Int, keystorePassword: String): Array<TrustManager> {
+private fun getTrustManagers(context: Context,
+                             keyStoreFile: Int,
+                             keystorePassword: String): Array<TrustManager> {
     val trusted = KeyStore.getInstance("BKS")
     val rawResource = context.resources.openRawResource(keyStoreFile)
     trusted.load(rawResource, keystorePassword.toCharArray())
@@ -43,10 +55,9 @@ private fun getTrustManagers(context: Context, keyStoreFile: Int, keystorePasswo
     return trustManagerFactory.trustManagers
 }
 
-
 private fun extractX509TrustManager(trustManagers: Array<TrustManager>): X509TrustManager {
-    if (trustManagers.size != 1 || !(trustManagers[0] is X509TrustManager)) {
-        throw IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers))
+    if (trustManagers.size != 1 || trustManagers[0] !is X509TrustManager) {
+        throw IllegalStateException("Unexpected default trust managers:${Arrays.toString(trustManagers)}")
     }
     return trustManagers[0] as X509TrustManager
 }

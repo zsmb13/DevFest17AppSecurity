@@ -7,19 +7,16 @@ import com.google.gson.reflect.TypeToken
 
 class PlainPreferences(val context: Context) {
 
-    operator inline fun <reified T : Any> get(key: String): T? {
-        return getSharedPreferences(key)
-    }
+    operator inline fun <reified T : Any> get(key: String): T? = getSharedPreferences(key)
 
-    operator inline fun <reified T : Any> set(key: String, value: T?) {
-        value?.let {
-            return putSharedPreferences(key, value)
-        }
-        return removeSharedPreferences(key)
-    }
+    operator inline fun <reified T : Any> set(key: String, value: T?) =
+            if (value != null)
+                putSharedPreferences(key, value)
+            else
+                removeSharedPreferences(key)
 
-    val gson = Gson()
-
+    @PublishedApi
+    internal val gson = Gson()
 
     inline fun <reified T : Any> putSharedPreferences(key: String, content: T?) {
         val preferences = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
@@ -29,7 +26,6 @@ class PlainPreferences(val context: Context) {
     inline fun <reified T : Any> getSharedPreferences(key: String): T? {
         val preferences = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
         val content = preferences.getString(key, "")
-
         return gson.fromJson(content, object : TypeToken<T>() {}.type)
     }
 
@@ -37,4 +33,5 @@ class PlainPreferences(val context: Context) {
         val preferences = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
         preferences.edit().remove(key).apply()
     }
+
 }

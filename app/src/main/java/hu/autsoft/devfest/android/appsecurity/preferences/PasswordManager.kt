@@ -10,8 +10,11 @@ import javax.crypto.spec.PBEKeySpec
 
 
 class PasswordManager(val context: Context) {
-    private val KEY_DERIVATION_ALG = "PBKDF2WithHmacSHA1"
-    private val RANDOM_ALG = "SHA1PRNG"
+
+    companion object {
+        private const val KEY_DERIVATION_ALG = "PBKDF2WithHmacSHA1"
+        private const val RANDOM_ALG = "SHA1PRNG"
+    }
 
     fun setDerivedPassword(tag: String, password: CharArray, keyLengthInBits: Int): ByteArray {
         val plainPrefs = PlainPreferences(context)
@@ -41,7 +44,6 @@ class PasswordManager(val context: Context) {
         val nothing: String? = null
         plainPrefs[tag] = nothing
     }
-
 
     private fun deriveKey(password: CharArray, iv: ByteArray, keyLengthInBits: Int): ByteArray {
         val iterationCount = 1000
